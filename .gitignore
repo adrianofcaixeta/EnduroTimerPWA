@@ -1,0 +1,50 @@
+# Arquivos e diretórios do Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Diretórios do ambiente virtual
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# Arquivos de configuração de IDEs
+.vscode/
+.idea/
+
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
+
+# Configurações de banco de dados locais
+*.sqlite3
+*.yml
+
+# Arquivos de log
+*.log
+
+# Arquivo de secret keys ou variáveis de ambiente
+.env
+
+# Arquivos de cache e compilação
+*.egg-info/
+.eggs/
+*.egg
+*.manifest
+*.spec
+
+# Arquivos de teste e cobertura
+.coverage
+.tox/
+.pytest_cache/
+.nox/
+.hypothesis/
+
+# Outros
+*.pot
+*.mo
+*.swap
+*~

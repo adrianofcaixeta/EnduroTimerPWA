@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div id="app">
+    <button id="downloadButton">Baixar Rota do Enduro</button>
+    <button id="startButton" disabled>Iniciar</button>
+    <div id="timer">00:00</div>
+    <button id="pauseButton" style="display: none;">Pausar</button>
+    <div id="dataDisplay"></div>
+</div>
+<div id="installBanner" style="display: none;">
+    <p>Instale nosso app para uma melhor experiência!</p>
+    <button id="installButton">Instalar</button>
+</div>
+{% endblock %}
