@@ -9,9 +9,43 @@
     {% assets "css_all" %}
         <link rel="stylesheet" href="{{ ASSET_URL }}">
     {% endassets %}
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            overflow: hidden;
+        }
+        #content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+    </style>
+    <script>
+        // Bloqueia a atualização da página
+        window.addEventListener('beforeunload', function (e) {
+            // Cancela o evento
+            e.preventDefault();
+            // Chrome requer que returnValue seja definido
+            e.returnValue = '';
+        });
+
+        // Desabilita o botão de atualização do navegador (F5 e Ctrl+R)
+        document.onkeydown = function(e) {
+            if (e.keyCode == 116 || (e.ctrlKey && e.keyCode == 82)) {
+                e.preventDefault();
+                return false;
+            }
+        };
+    </script>
 </head>
 <body>
-    {% block content %}{% endblock %}
+    <div id="content">
+        {% block content %}{% endblock %}
+    </div>
     {% assets "js_all" %}
         <script src="{{ ASSET_URL }}"></script>
     {% endassets %}

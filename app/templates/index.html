@@ -1,15 +1,75 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style>
+    #app {
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+    }
+    #controls {
+        padding: 10px;
+    }
+    #pdfViewer {
+        flex-grow: 1;
+        width: 100%;
+        display: none;
+    }
+    #pdfFrame {
+        width: 100%;
+        height: 100%;
+        border: none;
+    }
+</style>
+
 <div id="app">
-    <button id="downloadButton">Baixar Rota do Enduro</button>
-    <button id="startButton" disabled>Iniciar</button>
-    <div id="timer">00:00</div>
-    <button id="pauseButton" style="display: none;">Pausar</button>
-    <div id="dataDisplay"></div>
+    <div id="controls">
+        <button id="downloadButton">Baixar Rota do Enduro</button>
+        <button id="startButton" disabled>Iniciar</button>
+        <div id="timer">00:00</div>
+        <button id="pauseButton" style="display: none;">Pausar</button>
+        <div id="dataDisplay"></div>
+    </div>
+    <div id="pdfViewer">
+        <iframe id="pdfFrame"></iframe>
+    </div>
 </div>
 <div id="installBanner" style="display: none;">
     <p>Instale nosso app para uma melhor experiência!</p>
     <button id="installButton">Instalar</button>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const downloadButton = document.getElementById('downloadButton');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const pdfFrame = document.getElementById('pdfFrame');
+    const controls = document.getElementById('controls');
+
+    downloadButton.addEventListener('click', function() {
+        if (pdfViewer.style.display === 'block') {
+            pdfViewer.style.display = 'none';
+            downloadButton.textContent = 'Baixar Rota do Enduro';
+            controls.style.display = 'block';
+        } else {
+            fetch('/download-pdf')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        pdfFrame.src = data.path;
+                        pdfViewer.style.display = 'block';
+                        downloadButton.textContent = 'Fechar PDF';
+                        controls.style.display = 'none';
+                    } else {
+                        alert('Erro ao baixar o PDF: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao baixar o PDF');
+                });
+        }
+    });
+});
+</script>
 {% endblock %}
