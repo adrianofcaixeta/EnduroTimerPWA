@@ -3,7 +3,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const startButton = document.getElementById('startButton');
     const pauseButton = document.getElementById('pauseButton');
     const timerDisplay = document.getElementById('timer');
-    const dataDisplay = document.getElementById('dataDisplay');
+    const pdfViewer = document.getElementById('pdfViewer');
+    const pdfFrame = document.getElementById('pdfFrame');
+    const controls = document.getElementById('controls');
 
     let isRunning = false;
     let time = 0;
@@ -13,11 +15,13 @@ document.addEventListener('DOMContentLoaded', () => {
         fetch('/check-pdf')
             .then(response => response.json())
             .then(data => {
-                if (data.exists) {
+                if (data.exists && data.is_released) {
                     displayPDF(data.path);
                     startButton.disabled = false;
-                    downloadButton.disabled = true;
-                    downloadButton.textContent = 'Rota do Enduro Baixada';
+                    downloadButton.textContent = 'Fechar PDF';
+                } else {
+                    downloadButton.disabled = false;
+                    downloadButton.textContent = 'Baixar Rota do Enduro';
                 }
             });
     }
@@ -25,29 +29,35 @@ document.addEventListener('DOMContentLoaded', () => {
     checkExistingPDF();
 
     downloadButton.addEventListener('click', () => {
-        downloadButton.disabled = true;
-        downloadButton.textContent = 'Baixando...';
+        if (pdfViewer.style.display === 'block') {
+            pdfViewer.style.display = 'none';
+            downloadButton.textContent = 'Baixar Rota do Enduro';
+            controls.style.display = 'block';
+        } else {
+            downloadButton.disabled = true;
+            downloadButton.textContent = 'Baixando...';
 
-        fetch('/download-pdf')
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    displayPDF(data.path);
-                    startButton.disabled = false;
-                    downloadButton.textContent = 'Rota do Enduro Baixada';
-                    downloadButton.disabled = true;
-                } else {
-                    alert('Erro ao baixar o PDF: ' + data.error);
+            fetch('/download-pdf')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        displayPDF(data.path);
+                        startButton.disabled = false;
+                        downloadButton.textContent = 'Fechar PDF';
+                        downloadButton.disabled = false;
+                    } else {
+                        alert('Erro ao baixar o PDF: ' + data.error);
+                        downloadButton.textContent = 'Tentar Novamente';
+                        downloadButton.disabled = false;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Erro ao baixar o arquivo');
                     downloadButton.textContent = 'Tentar Novamente';
                     downloadButton.disabled = false;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Erro ao baixar o arquivo');
-                downloadButton.textContent = 'Tentar Novamente';
-                downloadButton.disabled = false;
-            });
+                });
+        }
     });
 
     startButton.addEventListener('click', () => {
@@ -74,14 +84,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function displayPDF(path) {
-        dataDisplay.innerHTML = `<iframe src="${path}" width="100%" height="600px" id="pdfFrame"></iframe>`;
+        pdfFrame.src = '/serve-pdf';  // Use a nova rota para servir o PDF
+        pdfViewer.style.display = 'block';
+        controls.style.display = 'none';
         
-        const iframe = document.getElementById('pdfFrame');
-        iframe.onload = () => {
-            iframe.contentWindow.addEventListener('scroll', () => {
-                const scrollPosition = iframe.contentWindow.scrollY;
-                const scrollHeight = iframe.contentDocument.documentElement.scrollHeight;
-                const clientHeight = iframe.contentDocument.documentElement.clientHeight;
+        pdfFrame.onload = () => {
+            pdfFrame.contentWindow.addEventListener('scroll', () => {
+                const scrollPosition = pdfFrame.contentWindow.scrollY;
+                const scrollHeight = pdfFrame.contentDocument.documentElement.scrollHeight;
+                const clientHeight = pdfFrame.contentDocument.documentElement.clientHeight;
                 
                 if (scrollPosition + clientHeight >= scrollHeight - 100) {
                     pauseButton.style.display = 'block';

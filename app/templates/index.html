@@ -2,6 +2,13 @@
 
 {% block content %}
 <style>
+    body, html {
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        width: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
     #app {
         display: flex;
         flex-direction: column;
@@ -9,67 +16,123 @@
     }
     #controls {
         padding: 10px;
+        background-color: #f0f0f0;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    #timer {
+        font-size: 3em;
+        font-weight: bold;
+        text-align: center;
+        margin: 10px 0;
+    }
+    #buttons {
+        display: flex;
+        justify-content: space-around;
+        margin: 10px 0;
+    }
+    button {
+        padding: 15px;
+        font-size: 1em;
+        border: none;
+        background-color: #007aff;
+        color: white;
+        border-radius: 8px;
+        width: 45%;
+    }
+    button:disabled {
+        background-color: #999999;
     }
     #pdfViewer {
         flex-grow: 1;
-        width: 100%;
-        display: none;
-    }
-    #pdfFrame {
-        width: 100%;
-        height: 100%;
-        border: none;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
     }
 </style>
 
 <div id="app">
     <div id="controls">
-        <button id="downloadButton">Baixar Rota do Enduro</button>
-        <button id="startButton" disabled>Iniciar</button>
         <div id="timer">00:00</div>
-        <button id="pauseButton" style="display: none;">Pausar</button>
-        <div id="dataDisplay"></div>
+        <div id="buttons">
+            <button id="downloadButton">Baixar Rota</button>
+            <button id="startButton" disabled>Iniciar</button>
+        </div>
     </div>
-    <div id="pdfViewer">
-        <iframe id="pdfFrame"></iframe>
-    </div>
-</div>
-<div id="installBanner" style="display: none;">
-    <p>Instale nosso app para uma melhor experiência!</p>
-    <button id="installButton">Instalar</button>
+    <div id="pdfViewer"></div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const downloadButton = document.getElementById('downloadButton');
+    const startButton = document.getElementById('startButton');
+    const timerDisplay = document.getElementById('timer');
     const pdfViewer = document.getElementById('pdfViewer');
-    const pdfFrame = document.getElementById('pdfFrame');
-    const controls = document.getElementById('controls');
+
+    let isRunning = false;
+    let time = 0;
+    let interval;
+
+    function checkExistingPDF() {
+        fetch('/check-pdf')
+            .then(response => response.json())
+            .then(data => {
+                if (data.exists && data.is_released) {
+                    displayPDF();
+                    startButton.disabled = false;
+                    downloadButton.textContent = 'Recarregar';
+                }
+            });
+    }
+
+    checkExistingPDF();
 
     downloadButton.addEventListener('click', function() {
-        if (pdfViewer.style.display === 'block') {
-            pdfViewer.style.display = 'none';
-            downloadButton.textContent = 'Baixar Rota do Enduro';
-            controls.style.display = 'block';
+        this.disabled = true;
+        this.textContent = 'Baixando...';
+
+        fetch('/download-pdf')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    displayPDF();
+                    startButton.disabled = false;
+                    this.textContent = 'Recarregar';
+                } else {
+                    alert('Erro ao baixar: ' + data.error);
+                    this.textContent = 'Tentar Novamente';
+                }
+                this.disabled = false;
+            })
+            .catch(error => {
+                console.error('Erro:', error);
+                alert('Erro ao baixar');
+                this.textContent = 'Tentar Novamente';
+                this.disabled = false;
+            });
+    });
+
+    startButton.addEventListener('click', function() {
+        if (!isRunning) {
+            isRunning = true;
+            this.textContent = 'Pausar';
+            interval = setInterval(updateTimer, 1000);
         } else {
-            fetch('/download-pdf')
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        pdfFrame.src = data.path;
-                        pdfViewer.style.display = 'block';
-                        downloadButton.textContent = 'Fechar PDF';
-                        controls.style.display = 'none';
-                    } else {
-                        alert('Erro ao baixar o PDF: ' + data.error);
-                    }
-                })
-                .catch(error => {
-                    console.error('Erro:', error);
-                    alert('Erro ao baixar o PDF');
-                });
+            isRunning = false;
+            clearInterval(interval);
+            this.textContent = 'Continuar';
+            alert(`Tempo: ${timerDisplay.textContent}`);
         }
     });
+
+    function updateTimer() {
+        time++;
+        const minutes = Math.floor(time / 60);
+        const seconds = time % 60;
+        timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function displayPDF() {
+        pdfViewer.innerHTML = '<embed src="/serve-pdf" type="application/pdf" width="100%" height="100%">';
+    }
 });
 </script>
 {% endblock %}
